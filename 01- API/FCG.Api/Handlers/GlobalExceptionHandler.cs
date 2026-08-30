@@ -6,10 +6,12 @@ namespace FCG.Api.Handlers;
 public class GlobalExceptionHandler : IExceptionHandler
 {
     private readonly ILogger<GlobalExceptionHandler> _logger;
+    private readonly IHostEnvironment _environment;
 
-    public GlobalExceptionHandler(ILogger<GlobalExceptionHandler> logger)
+    public GlobalExceptionHandler(ILogger<GlobalExceptionHandler> logger, IHostEnvironment environment)
     {
         _logger = logger;
+        _environment = environment;
     }
 
     public async ValueTask<bool> TryHandleAsync(HttpContext httpContext, Exception exception, CancellationToken cancellationToken)
@@ -21,7 +23,9 @@ public class GlobalExceptionHandler : IExceptionHandler
             Title = "Server error.",
             Instance = httpContext.Request.Path,
             Status = StatusCodes.Status500InternalServerError,
-            Detail = "Sorry, an unexpected error has occurred."
+            Detail = _environment.IsDevelopment()
+                ? exception.Message
+                : "Sorry, an unexpected error has occurred."
         };
 
         httpContext.Response.StatusCode = problemDetails.Status.Value;
