@@ -49,7 +49,7 @@ public class UserGameServiceTests
                 Game = new Game { Name = "Game", Price = 99.9m }
             });
 
-        var result = await _userGameService.PurchaseAsync(new CreateUserGameDto { GameId = 10 });
+        var result = await _userGameService.PurchaseAsync(new CreateUserGameDto { GameId = 10 }, TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
         Assert.Equal("Game", result.Value!.GameName);
@@ -65,7 +65,7 @@ public class UserGameServiceTests
         _userGameRepository.Setup(x => x.ExistsAsync(1, 10, It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
 
-        var result = await _userGameService.PurchaseAsync(new CreateUserGameDto { GameId = 10 });
+        var result = await _userGameService.PurchaseAsync(new CreateUserGameDto { GameId = 10 }, TestContext.Current.CancellationToken);
 
         Assert.IsType<ConflictResult<FCG.Application.DTOs.UserGames.ReadUserGameDto>>(result);
     }

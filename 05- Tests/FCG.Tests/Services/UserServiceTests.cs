@@ -52,7 +52,7 @@ public class UserServiceTests
                 UserRole = new UserRole { Name = nameof(UserRoles.User) }
             });
 
-        var result = await _userService.LoginAsync(new LoginDto { Email = "user@test.com", Password = "Abcdef1!" });
+        var result = await _userService.LoginAsync(new LoginDto { Email = "user@test.com", Password = "Abcdef1!" }, TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
         Assert.NotNull(result.Value);
@@ -65,7 +65,7 @@ public class UserServiceTests
         _userRepository.Setup(x => x.GetByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((User?)null);
 
-        var result = await _userService.LoginAsync(new LoginDto { Email = "missing@test.com", Password = "Abcdef1!" });
+        var result = await _userService.LoginAsync(new LoginDto { Email = "missing@test.com", Password = "Abcdef1!" }, TestContext.Current.CancellationToken);
 
         Assert.IsType<NotFoundResult<TokenDto>>(result);
     }
@@ -81,7 +81,7 @@ public class UserServiceTests
             Name = "User",
             Email = "user@test.com",
             Password = "Abcdef1!"
-        });
+        }, TestContext.Current.CancellationToken);
 
         Assert.IsType<ConflictResult<ReadUserDto>>(result);
     }
@@ -112,7 +112,7 @@ public class UserServiceTests
             Name = "User",
             Email = "user@test.com",
             Password = "Abcdef1!"
-        });
+        }, TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
         Assert.NotNull(capturedUser);

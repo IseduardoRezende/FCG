@@ -20,7 +20,7 @@ public class UserRoleServiceTests
             });
 
         var service = new UserRoleService(repository.Object);
-        var result = await service.GetAllAsync();
+        var result = await service.GetAllAsync(TestContext.Current.CancellationToken);
 
         Assert.True(result.Success);
         Assert.Equal(2, result.Value!.Count);
