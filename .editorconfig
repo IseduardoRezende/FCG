@@ -2,3 +2,4 @@
 dotnet_diagnostic.RCS1225.severity = silent
 dotnet_diagnostic.IDE0290.severity = silent
 dotnet_diagnostic.RCS1021.severity = silent
+dotnet_diagnostic.IDE0028.severity = silent
