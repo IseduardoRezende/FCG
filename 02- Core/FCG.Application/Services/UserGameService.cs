@@ -76,16 +76,11 @@ public class UserGameService : IUserGameService
     }
 
     public async Task<Result<Pagination<ReadUserGameDto>>> GetLibraryAsync(UserGameFilter filter, CancellationToken cancellationToken = default)
-    {
-        var targetUserId = ResolveLibraryUserId(filter.UserId);
-        
-        if (targetUserId is null)        
-            return InvalidResult<Pagination<ReadUserGameDto>>.Create(new Error("User id is required."));        
-
+    {        
         if (filter.UserId.HasValue && filter.UserId.Value != _currentUser.UserId && !_currentUser.IsAdministrator)        
-            return InvalidResult<Pagination<ReadUserGameDto>>.Create(new Error("You can only access your own library."));        
+            return InvalidResult<Pagination<ReadUserGameDto>>.Create(new Error("You can only access your own library."));
 
-        filter.UserId = _currentUser.IsAdministrator ? null : targetUserId;
+        filter.UserId = ResolveLibraryUserId(filter.UserId);
 
         var (items, totalCount) = await _userGameRepository.GetPagedAsync(filter, cancellationToken);
         var mapped = items.Select(MapToReadDto).ToList();
@@ -114,10 +109,7 @@ public class UserGameService : IUserGameService
 
     private long? ResolveLibraryUserId(long? requestedUserId)
     {
-        if (_currentUser.IsAdministrator && requestedUserId.HasValue)        
-            return requestedUserId.Value;        
-
-        return _currentUser.UserId;
+        return _currentUser.IsAdministrator && !requestedUserId.HasValue ? null : requestedUserId;
     }
 
     private static ReadUserGameDto MapToReadDto(UserGame userGame)
