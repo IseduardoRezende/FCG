@@ -1,152 +1,163 @@
 # FCG API — FIAP Cloud Games (Fase 1)
 
-API REST monolítica para cadastro de usuários, autenticação JWT e biblioteca de jogos adquiridos — Tech Challenge Fase 1 da FIAP.
+API REST para cadastro de usuários, autenticação JWT, catálogo de jogos e biblioteca de aquisições — Tech Challenge Fase 1 da FIAP.
 
-## Objetivo
+## O que a API faz
 
-Esta solução implementa o MVP da **FIAP Cloud Games (FCG)** com:
-
-- Cadastro e autenticação de usuários (JWT)
+- Cadastro e login de usuários com JWT
 - Papéis `User` e `Administrator`
-- CRUD de jogos (admin)
-- Biblioteca de jogos adquiridos por usuário
+- CRUD de jogos (administrador)
+- Compra e consulta da biblioteca de jogos por usuário
+- Listagens paginadas com filtros
 - Persistência com **EF Core + PostgreSQL**
 - Validação com **FluentValidation**
 - Testes unitários das principais regras de negócio
 
-## Arquitetura
+## Estrutura da solução
 
 ```
-FCG.Api                  → Controllers, Swagger, JWT, Serilog
-FCG.Application          → DTOs, Validators, Services
-FCG.Domain               → Entities, Result pattern, Repository interfaces
-FCG.Infrastructure       → EF Core, Repositories, Mappings, Migrations
-FCG.Infrastructure.IoC   → Dependency Injection
-FCG.Tests                → Unit tests (xUnit + Moq)
+01- API/FCG.Api                  Controllers, Swagger, JWT, Serilog
+02- Core/FCG.Application         DTOs, Validators, Services
+02- Core/FCG.Domain              Entities, Filters, Result pattern, interfaces
+03- Infrastructure/FCG.Infrastructure       EF Core, Repositories, Mappings
+03- Infrastructure/FCG.Infrastructure.IoC Dependency Injection
+05- Tests/FCG.Tests              Testes unitários (xUnit + Moq)
 ```
 
 ## Pré-requisitos
 
 - [.NET 10 SDK](https://dotnet.microsoft.com/download)
-- [PostgreSQL 18](https://www.postgresql.org/) (porta **5433** na configuração padrão)
-- [EF Core CLI](https://learn.microsoft.com/ef/core/cli/dotnet): `dotnet tool install --global dotnet-ef`
+- [PostgreSQL](https://www.postgresql.org/) em execução local
 
-## Configuração
+## Configuração rápida
 
-Edite a connection string em `01- API/FCG.Api/appsettings.json`:
+### 1. Banco de dados
+
+Crie o banco `fcg` no PostgreSQL e ajuste a connection string em `01- API/FCG.Api/appsettings.json`:
 
 ```json
 "ConnectionStrings": {
-  "DbConnection": "Host=127.0.0.1;Port=5433;Database=fcg;Username=postgres;Password=postgres"
+  "DbConnection": "Host=127.0.0.1;Port=5433;Database=fcg;Username=postgres;Password=SUA_SENHA"
 }
 ```
 
-> Ajuste `Username` e `Password` conforme seu ambiente local.
+> A API aplica as migrations automaticamente ao iniciar (`Database.Migrate()` no startup). Não é necessário rodar comandos manuais de migration.
 
-### JWT (`TokenSettings` no appsettings)
+### 2. JWT
 
-Configure em `01- API/FCG.Api/appsettings.json`:
-
-```json
-"TokenSettings": {
-  "Issuer": "FCG.Api",
-  "Audience": "FCG.Client",
-  "Key": "sua-chave-secreta-com-pelo-menos-32-caracteres",
-  "DaysUntilExpires": 1
-}
-```
-
-Para sobrescrever em desenvolvimento sem alterar o arquivo, use User Secrets:
+As configurações ficam em `TokenSettings` no mesmo `appsettings.json`. Em produção, use User Secrets ou variáveis de ambiente para a chave:
 
 ```powershell
 cd "01- API/FCG.Api"
-dotnet user-secrets init
 dotnet user-secrets set "TokenSettings:Key" "sua-chave-secreta-com-pelo-menos-32-caracteres"
 ```
 
-## Migrations (manual)
-
-A estrutura EF está pronta. Execute os comandos abaixo na raiz da solução:
-
-```powershell
-dotnet ef migrations add InitialCreate `
-  --project "03- Infrastructure/FCG.Infrastructure/FCG.Infrastructure.csproj" `
-  --startup-project "01- API/FCG.Api/FCG.Api.csproj"
-
-dotnet ef database update `
-  --project "03- Infrastructure/FCG.Infrastructure/FCG.Infrastructure.csproj" `
-  --startup-project "01- API/FCG.Api/FCG.Api.csproj"
-```
-
-> A API também executa `Database.Migrate()` automaticamente no startup.
-
-## Executar a API
+### 3. Executar
 
 ```powershell
 dotnet restore
 dotnet run --project "01- API/FCG.Api/FCG.Api.csproj"
 ```
 
-- Swagger: `https://localhost:7xxx/swagger` (porta exibida no console)
-- Logs estruturados via **Serilog** no terminal
+| Ambiente | URL |
+|----------|-----|
+| Swagger (HTTPS) | https://localhost:7285/swagger |
+| HTTP | http://localhost:5268 |
 
-## Testes
+Os logs aparecem no terminal via **Serilog**.
 
-```powershell
-dotnet test
-```
+## Usuário administrador padrão
 
-Cobertura principal:
+Um admin já é criado via seed no banco:
 
-| Teste | Regra |
+| Campo | Valor |
 |-------|-------|
-| `RegisterUserDtoValidatorTests` | Senha forte, email válido |
-| `UserServiceTests` | Login, email duplicado, role padrão |
-| `UserRoleServiceTests` | Listagem dinâmica de roles |
-| `UserGameServiceTests` | Compra e duplicidade |
+| E-mail | `fcg@admin.com` |
+| Senha | `Fcg@Admin2026!` |
 
-## Primeiro usuário administrador
+Faça login em `POST /api/v1/users/logins` e use o token no Swagger (**Authorize** → `Bearer {token}`).
 
-1. Registre um usuário: `POST /api/v1/users/register`
-2. Consulte as roles: `GET /api/v1/users/roles`
-3. No banco, atualize `UserRoleId` para `2` (`Administrator`) na tabela de usuários
-4. Faça login: `POST /api/v1/users/logins` e use o token JWT no Swagger (Authorize)
+Para criar outros usuários comuns, use `POST /api/v1/users/register` (recebem a role `User` automaticamente).
+
+## Autenticação
+
+1. Login: `POST /api/v1/users/logins`
+2. Copie o `token` da resposta
+3. No Swagger, clique em **Authorize** e informe: `Bearer SEU_TOKEN`
+
+Endpoints protegidos exigem o header:
+
+```
+Authorization: Bearer {token}
+```
 
 ## Endpoints
 
-Base URL: `/api/v1`
+Base: `/api/v1`
 
 ### Users
 
-| Método | Rota | Auth | Descrição |
-|--------|------|------|-----------|
-| GET | `/users/roles` | Anônimo | Listar roles |
-| POST | `/users/register` | Anônimo | Cadastrar usuário |
-| POST | `/users/logins` | Anônimo | Login (retorna JWT) |
-| GET | `/users` | Admin | Listar usuários |
+| Método | Rota | Acesso | Descrição |
+|--------|------|--------|-----------|
+| GET | `/users/roles` | Público | Listar roles |
+| POST | `/users/register` | Público | Cadastrar usuário |
+| POST | `/users/logins` | Público | Login (retorna JWT) |
+| GET | `/users` | Admin | Listar usuários (paginado + filtros) |
 | GET | `/users/{id}` | Admin ou próprio | Detalhe do usuário |
 | PUT | `/users/{id}` | Admin | Atualizar usuário |
 | DELETE | `/users/{id}` | Admin | Excluir usuário (soft delete) |
 
 ### Games
 
-| Método | Rota | Auth | Descrição |
-|--------|------|------|-----------|
+| Método | Rota | Acesso | Descrição |
+|--------|------|--------|-----------|
 | POST | `/games` | Admin | Criar jogo |
-| GET | `/games` | Autenticado | Listar jogos |
+| GET | `/games` | Autenticado | Listar jogos (paginado + filtros) |
 | GET | `/games/{id}` | Autenticado | Detalhe do jogo |
 | PUT | `/games/{id}` | Admin | Atualizar jogo |
 | DELETE | `/games/{id}` | Admin | Excluir jogo |
 
 ### User Games (biblioteca)
 
-| Método | Rota | Auth | Descrição |
-|--------|------|------|-----------|
+| Método | Rota | Acesso | Descrição |
+|--------|------|--------|-----------|
 | POST | `/user-games` | Autenticado | Adquirir jogo |
-| GET | `/user-games` | Autenticado | Biblioteca do usuário |
+| GET | `/user-games` | Autenticado | Biblioteca (paginado + filtros) |
 | GET | `/user-games/{id}` | Autenticado | Detalhe da aquisição |
 
-### Exemplo — Registro
+## Filtros e paginação
+
+As listagens (`GET /users`, `GET /games`, `GET /user-games`) aceitam query params de filtro. A resposta segue o formato `Pagination<T>` com `items`, `totalCount`, `page` e `pageSize`.
+
+### Parâmetros comuns (`BaseFilter`)
+
+| Parâmetro | Padrão | Descrição |
+|-----------|--------|-----------|
+| `value` | — | Busca textual |
+| `currentPage` | `1` | Página atual |
+| `pageSize` | `15` | Itens por página (máx. 100) |
+| `orderField` | `Id` | Campo de ordenação |
+| `orderType` | `Desc` | `Asc` ou `Desc` |
+
+> O Swagger pode exibir os parâmetros em PascalCase (`Value`, `CurrentPage`...). Ambos os formatos funcionam no binding.
+
+### Filtros específicos
+
+| Endpoint | Parâmetros extras |
+|----------|-------------------|
+| `GET /users` | `userRoleId` |
+| `GET /games` | `minPrice`, `maxPrice` |
+| `GET /user-games` | `userId` (admin), `gameId`, `purchasedFrom`, `purchasedTo` |
+
+Exemplo:
+
+```
+GET /api/v1/games?value=rpg&minPrice=10&maxPrice=100&currentPage=1&pageSize=15
+```
+
+## Exemplos de requisição
+
+### Registro
 
 ```http
 POST /api/v1/users/register
@@ -159,34 +170,42 @@ Content-Type: application/json
 }
 ```
 
-### Exemplo — Login
+Regras de senha: mínimo 6 caracteres, com letra, número e caractere especial.
+
+### Login
 
 ```http
 POST /api/v1/users/logins
 Content-Type: application/json
 
 {
-  "email": "john@example.com",
-  "password": "Abcdef1!"
+  "email": "fcg@admin.com",
+  "password": "Fcg@Admin2026!"
 }
 ```
 
-Use o token retornado no header: `Authorization: Bearer {token}`
+## Testes
 
-## Entidades
+```powershell
+dotnet test "05- Tests/FCG.Tests/FCG.Tests.csproj"
+```
 
-| Entidade | Campos principais |
-|----------|---------------------|
-| `User` | Name, Email, Password, Salt, UserRoleId, CreatedAt |
-| `UserRole` | Name (`User`, `Administrator`) — seed via EF |
-| `Game` | Name, Description, Price, CreatedAt |
-| `UserGame` | UserId, GameId, PurchasedAt |
+Ou execute diretamente o binário de testes se o `dotnet test` não estiver disponível no SDK:
 
-## Entregáveis pendentes (grupo)
+```powershell
+& "05- Tests/FCG.Tests/bin/Debug/net10.0/FCG.Tests.exe"
+```
 
-- Vídeo demonstrativo (até 15 min)
-- Documentação DDD (Event Storming no Miro)
-- Relatório PDF/TXT com links do repositório, documentação e vídeo
+## Entidades principais
+
+| Entidade | Descrição |
+|----------|-----------|
+| `User` | Usuário com e-mail, senha (hash PBKDF2) e role |
+| `UserRole` | `User` ou `Administrator` (seed) |
+| `Game` | Jogo com nome, descrição e preço |
+| `UserGame` | Vínculo de compra entre usuário e jogo |
+
+Todas as entidades herdam soft delete via `IsDeleted`.
 
 ## Licença
 
