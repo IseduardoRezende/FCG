@@ -1,0 +1,41 @@
+## Build
+bin/
+obj/
+[Bb]uild/
+[Ll]og/
+*.user
+*.userosscache
+*.suo
+*.cache
+*.dll
+*.exe
+*.pdb
+*.log
+
+## IDE
+.vs/
+.idea/
+*.swp
+*.DS_Store
+
+## Secrets / local
+appsettings.json
+appsettings.Development.json
+*.pfx
+*.key
+.env
+.env.*
+
+## Storage (DEV photo uploads)
+storage/
+uploads/
+
+## Test
+TestResults/
+coverage/
+*.coverage
+*.coveragexml
+
+## NuGet
+*.nupkg
+**/packages/

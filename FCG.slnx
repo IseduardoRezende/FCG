@@ -1,0 +1,16 @@
+<Solution>
+  <Folder Name="/01- API/">
+    <Project Path="01- API/FCG.Api/FCG.Api.csproj" />
+  </Folder>
+  <Folder Name="/02- Core/">
+    <Project Path="02- Core/FCG.Application/FCG.Application.csproj" />
+    <Project Path="02- Core/FCG.Domain/FCG.Domain.csproj" />
+  </Folder>
+  <Folder Name="/03- Infrastructure/">
+    <Project Path="03- Infrastructure/FCG.Infrastructure.IoC/FCG.Infrastructure.IoC.csproj" />
+    <Project Path="03- Infrastructure/FCG.Infrastructure/FCG.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/05- Tests/">
+    <Project Path="05- Tests/FCG.Tests/FCG.Tests.csproj" />
+  </Folder>
+</Solution>
