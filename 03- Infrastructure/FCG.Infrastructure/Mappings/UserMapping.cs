@@ -14,7 +14,7 @@ public class UserMapping : BaseEntityMapping<User>
         builder.Property(c => c.Password).HasMaxLength(256).IsRequired();
         builder.Property(c => c.Salt).HasMaxLength(64).IsRequired();
 
-        builder.HasIndex(c => c.Email).IsUnique();
+        builder.HasIndex(c => c.Email);
 
         builder.HasOne(c => c.UserRole)
             .WithMany(c => c.Users)

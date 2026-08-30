@@ -9,7 +9,7 @@ public class UserGameMapping : BaseEntityMapping<UserGame>
     {
         base.Configure(builder);
 
-        builder.HasIndex(c => new { c.UserId, c.GameId }).IsUnique();
+        builder.HasIndex(c => new { c.UserId, c.GameId });
 
         builder.HasOne(c => c.User)
             .WithMany(c => c.UserGames)

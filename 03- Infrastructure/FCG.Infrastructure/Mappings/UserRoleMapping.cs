@@ -11,7 +11,7 @@ public class UserRoleMapping : BaseEntityMapping<UserRole>
         base.Configure(builder);
 
         builder.Property(c => c.Name).HasMaxLength(50).IsRequired();
-        builder.HasIndex(c => c.Name).IsUnique();
+        builder.HasIndex(c => c.Name);
 
         builder.HasData(
             new UserRole { Id = (long)UserRoles.User, Name = nameof(UserRoles.User), IsDeleted = false },
