@@ -1,4 +1,5 @@
 using FCG.Domain.Entities;
+using FCG.Domain.Filters;
 
 namespace FCG.Domain.Repositories;
 
@@ -10,7 +11,7 @@ public interface IUserRepository
 
     Task<bool> ExistsByEmailAsync(string email, CancellationToken cancellationToken = default);
 
-    Task<(IReadOnlyList<User> Items, int TotalCount)> GetPagedAsync(int page, int pageSize, CancellationToken cancellationToken = default);
+    Task<(IReadOnlyList<User> Items, int TotalCount)> GetPagedAsync(UserFilter filter, CancellationToken cancellationToken = default);
 
     Task AddAsync(User user, CancellationToken cancellationToken = default);
 
