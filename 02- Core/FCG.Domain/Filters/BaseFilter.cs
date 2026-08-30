@@ -1,5 +1,5 @@
 using FCG.Domain.Enums;
-using System.ComponentModel.DataAnnotations;
+using System.ComponentModel;
 using System.Text.Json.Serialization;
 
 namespace FCG.Domain.Filters;
@@ -10,9 +10,9 @@ public class BaseFilter
 
     public BaseFilter()
     {
-        PageSize = 10;
+        PageSize = 15;
         CurrentPage = 1;
-        OrderField = "Id";
+        OrderField = "id";
         OrderType = OrderTypes.Desc;
     }
 
@@ -20,14 +20,33 @@ public class BaseFilter
     public string? Value { get; set; }
 
     [JsonPropertyName("currentPage")]
-    public int CurrentPage { get; set; }
+    [DefaultValue(1)]
+    public int CurrentPage
+    {
+        get;
+        set
+        {
+            field = value < 1 ? 1 : value;
+        }
+    }
 
-    [JsonPropertyName("pageSize"), MaxLength(MaxPageSize)]
-    public int PageSize { get; set; }
+    [DefaultValue(15)]
+    [JsonPropertyName("pageSize")]
+    public int PageSize 
+    { 
+        get; 
+        set
+        {
+            field = value > MaxPageSize ? MaxPageSize : value;
+        }
+    }
 
     [JsonPropertyName("orderField")]
-    public string OrderField { get; set; }
+    [DefaultValue("id")]
+    public string OrderField { get; set; }   
 
     [JsonPropertyName("orderType")]
-    public OrderTypes OrderType { get; set; } 
+
+    [DefaultValue(OrderTypes.Desc)]
+    public OrderTypes OrderType { get; set; }
 }
