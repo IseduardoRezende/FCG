@@ -4,6 +4,7 @@ using FCG.Application.Services.Interfaces;
 using FCG.Domain.Commons;
 using FCG.Domain.Commons.Result;
 using FCG.Domain.Enums;
+using FCG.Domain.Filters;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
@@ -53,9 +54,9 @@ public class UsersController : BaseController
     [Authorize(Roles = nameof(UserRoles.Administrator))]
     [SwaggerOperation(Summary = "List users")]
     [ProducesResponseType(typeof(SuccessResult<Pagination<ReadUserDto>>), StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetPagedAsync([FromQuery] int page = 1, [FromQuery] int pageSize = 10, CancellationToken cancellationToken = default)
+    public async Task<IActionResult> GetPagedAsync([FromQuery] UserFilter filter, CancellationToken cancellationToken = default)
     {
-        return (await _userService.GetPagedAsync(page, pageSize, cancellationToken)).ToActionResult();
+        return (await _userService.GetPagedAsync(filter, cancellationToken)).ToActionResult();
     }
 
     [HttpGet("{id:long}")]

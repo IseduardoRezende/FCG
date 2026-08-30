@@ -1,8 +1,11 @@
 using FCG.Api.Extensions;
 using FCG.Application.DTOs.Games;
+using FCG.Application.Services;
 using FCG.Application.Services.Interfaces;
+using FCG.Domain.Commons;
 using FCG.Domain.Commons.Result;
 using FCG.Domain.Enums;
+using FCG.Domain.Filters;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
@@ -30,10 +33,10 @@ public class GamesController : BaseController
 
     [HttpGet]
     [SwaggerOperation(Summary = "List games")]
-    [ProducesResponseType(typeof(SuccessResult<IReadOnlyList<ReadGameDto>>), StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetAllAsync(CancellationToken cancellationToken)
+    [ProducesResponseType(typeof(SuccessResult<Pagination<ReadGameDto>>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetPagedAsync([FromQuery] GameFilter filter, CancellationToken cancellationToken)
     {
-        return (await _gameService.GetAllAsync(cancellationToken)).ToActionResult();
+        return (await _gameService.GetPagedAsync(filter, cancellationToken)).ToActionResult();
     }
 
     [HttpGet("{id:long}")]

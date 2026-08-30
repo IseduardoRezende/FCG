@@ -1,5 +1,5 @@
-using System.Text;
 using Asp.Versioning;
+using FCG.Api.Converters;
 using FCG.Api.Handlers;
 using FCG.Api.Security;
 using FCG.Api.Swagger;
@@ -9,12 +9,14 @@ using FCG.Infrastructure.DbContexts;
 using FCG.Infrastructure.IoC;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
 using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 using Serilog;
 using Serilog.Events;
 using Swashbuckle.AspNetCore.SwaggerGen;
+using System.Text;
+using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -28,7 +30,10 @@ builder.Host.UseSerilog((_, _) =>
         .CreateLogger();
 });
 
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(c => c.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()))
+    .AddJsonOptions(c => c.JsonSerializerOptions.Converters.Add(new TrimmingJsonConverter()));
+
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentUser, HttpCurrentUser>();
 builder.Services.Configure<TokenSettings>(builder.Configuration.GetSection(nameof(TokenSettings)));

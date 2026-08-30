@@ -1,7 +1,9 @@
 using FCG.Api.Extensions;
 using FCG.Application.DTOs.UserGames;
 using FCG.Application.Services.Interfaces;
+using FCG.Domain.Commons;
 using FCG.Domain.Commons.Result;
+using FCG.Domain.Filters;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
 
@@ -27,10 +29,10 @@ public class UserGamesController : BaseController
 
     [HttpGet]
     [SwaggerOperation(Summary = "List user game library")]
-    [ProducesResponseType(typeof(SuccessResult<IReadOnlyList<ReadUserGameDto>>), StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetLibraryAsync([FromQuery] long? userId, CancellationToken cancellationToken)
+    [ProducesResponseType(typeof(SuccessResult<Pagination<ReadUserGameDto>>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetLibraryAsync([FromQuery] UserGameFilter filter, CancellationToken cancellationToken)
     {
-        return (await _userGameService.GetLibraryAsync(userId, cancellationToken)).ToActionResult();
+        return (await _userGameService.GetLibraryAsync(filter, cancellationToken)).ToActionResult();
     }
 
     [HttpGet("{id:long}")]
