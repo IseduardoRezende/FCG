@@ -19,8 +19,8 @@ jobs:
       with:
         dotnet-version: 10.0.x
     - name: Restore dependencies
-      run: dotnet restore 01- API\FCG.Api
+      run: dotnet restore "01- APIFCG.Api"
     - name: Build
       run: dotnet build --no-restore FCG.slnx
     - name: Test
-      run: dotnet test --no-build --verbosity normal 05- Tests\FCG.Tests\FCG.Tests.csproj
+      run: dotnet test --no-build --verbosity normal "05- Tests\FCG.Tests\FCG.Tests.csproj"
