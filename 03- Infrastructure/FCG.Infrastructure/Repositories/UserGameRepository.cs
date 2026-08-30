@@ -35,6 +35,7 @@ public class UserGameRepository : IUserGameRepository
     {
         var query = _dbContext.Set<UserGame>()
             .Include(ug => ug.Game)
+            .Include(ug => ug.User)
             .Where(ApplyFilter(filter));
 
         var totalCount = await query.CountAsync(cancellationToken);
