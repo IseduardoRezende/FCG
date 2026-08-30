@@ -12,7 +12,7 @@ public class BaseFilter
     {
         PageSize = 10;
         CurrentPage = 1;
-        OrderField = "id";
+        OrderField = "Id";
         OrderType = OrderTypes.Desc;
     }
 
