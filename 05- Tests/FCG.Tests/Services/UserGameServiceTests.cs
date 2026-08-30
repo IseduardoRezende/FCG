@@ -1,6 +1,6 @@
 using FCG.Application.Abstractions;
 using FCG.Application.DTOs.UserGames;
-using FCG.Application.Services.Interfaces;
+using FCG.Application.Services;
 using FCG.Application.Validators;
 using FCG.Domain.Commons.Result;
 using FCG.Domain.Entities;

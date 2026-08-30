@@ -1,5 +1,4 @@
-using FCG.Application.Services.Interfaces;
-using FCG.Domain.Commons.Result;
+using FCG.Application.Services;
 using FCG.Domain.Entities;
 using FCG.Domain.Repositories;
 using Moq;
