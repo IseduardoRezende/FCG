@@ -109,10 +109,7 @@ public class UserGameService : IUserGameService
 
     private long? ResolveTargetUserId(long? requestedUserId)
     {
-        if (requestedUserId.HasValue)        
-            return requestedUserId.Value;        
-
-        return _currentUser.UserId;
+        return requestedUserId ?? _currentUser.UserId;
     }
 
     private long? ResolveLibraryUserId(long? requestedUserId)
