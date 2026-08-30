@@ -21,13 +21,13 @@ API REST para cadastro de usuários, autenticação JWT, catálogo de jogos e bi
 02- Core/FCG.Domain              Entities, Filters, Result pattern, interfaces
 03- Infrastructure/FCG.Infrastructure       EF Core, Repositories, Mappings
 03- Infrastructure/FCG.Infrastructure.IoC Dependency Injection
-05- Tests/FCG.Tests              Testes unitários (xUnit + Moq)
+05- Tests/FCG.Tests              Testes unitários (xUnit + Moq), TESTS.md
 ```
 
 ## Pré-requisitos
 
 - [.NET 10 SDK](https://dotnet.microsoft.com/download)
-- [PostgreSQL](https://www.postgresql.org/) em execução local
+- [PostgreSQL 18](https://www.postgresql.org/) em execução local
 
 ## Configuração rápida
 
@@ -50,6 +50,49 @@ As configurações ficam em `TokenSettings` no mesmo `appsettings.json`. Em prod
 ```powershell
 cd "01- API/FCG.Api"
 dotnet user-secrets set "TokenSettings:Key" "sua-chave-secreta-com-pelo-menos-32-caracteres"
+```
+
+### Exemplo de appsettings.json (copy/paste)
+
+```json
+{
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.AspNetCore": "Warning"
+    }
+  },
+  "AllowedHosts": "*",
+  "ConnectionStrings": {
+    "DbConnection": "Host=127.0.0.1;Port=5433;Database=fcg;Username=postgres;Password=root"
+  },
+  "Serilog": {
+    "Using": [ "Serilog.Sinks.Console" ],
+    "MinimumLevel": {
+      "Default": "Information",
+      "Override": {
+        "Microsoft": "Warning",
+        "Microsoft.AspNetCore": "Warning",
+        "System": "Warning"
+      }
+    },
+    "WriteTo": [
+      {
+        "Name": "Console",
+        "Args": {
+          "outputTemplate": "[{Timestamp:HH:mm:ss} {Level:u3}] {SourceContext} {Message:lj}{NewLine}{Exception}"
+        }
+      }
+    ],
+    "Enrich": [ "FromLogContext" ]
+  },
+  "TokenSettings": {
+    "Issuer": "FCG.Api",
+    "Audience": "FCG.Client",
+    "Key": "e2e72084-ea2d-4b03-a922-15786ab9ba42-1722a637-338e-4ce5-818b-3e31e02961dc",
+    "DaysUntilExpires": 1
+  }
+}
 ```
 
 ### 3. Executar
@@ -79,16 +122,16 @@ Faça login em `POST /api/v1/users/logins` e use o token no Swagger (**Authorize
 
 Para criar outros usuários comuns, use `POST /api/v1/users/register` (recebem a role `User` automaticamente).
 
-## Autenticação
+## Autenticação JWT Bearer
 
 1. Login: `POST /api/v1/users/logins`
 2. Copie o `token` da resposta
-3. No Swagger, clique em **Authorize** e informe: `Bearer SEU_TOKEN`
+3. No Swagger, clique em **Authorize** e informe: `SEU_TOKEN`
 
 Endpoints protegidos exigem o header:
 
 ```
-Authorization: Bearer {token}
+Authorization: {token}
 ```
 
 ## Endpoints
@@ -170,7 +213,7 @@ Content-Type: application/json
 }
 ```
 
-Regras de senha: mínimo 6 caracteres, com letra, número e caractere especial.
+Regras de senha: mínimo 8 caracteres, com letra, número e caractere especial.
 
 ### Login
 
@@ -186,6 +229,11 @@ Content-Type: application/json
 
 ## Testes
 
+**Documentação**: *"05- Tests/TESTS.md"*
+
+- 
+
+**Executar**
 ```powershell
 dotnet test "05- Tests/FCG.Tests/FCG.Tests.csproj"
 ```
