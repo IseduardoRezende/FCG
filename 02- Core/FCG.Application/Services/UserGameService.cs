@@ -85,7 +85,7 @@ public class UserGameService : IUserGameService
         if (filter.UserId.HasValue && filter.UserId.Value != _currentUser.UserId && !_currentUser.IsAdministrator)        
             return InvalidResult<Pagination<ReadUserGameDto>>.Create(new Error("You can only access your own library."));        
 
-        filter.UserId = targetUserId;
+        filter.UserId = _currentUser.IsAdministrator ? null : targetUserId;
 
         var (items, totalCount) = await _userGameRepository.GetPagedAsync(filter, cancellationToken);
         var mapped = items.Select(MapToReadDto).ToList();
@@ -127,6 +127,8 @@ public class UserGameService : IUserGameService
             Id = userGame.Id,
             UserId = userGame.UserId,
             GameId = userGame.GameId,
+            UserName = userGame.User?.Name,
+            UserEmail = userGame.User?.Email,
             GameName = userGame.Game?.Name ?? string.Empty,
             GamePrice = userGame.Game?.Price ?? 0,
             PurchasedAt = userGame.PurchasedAt
