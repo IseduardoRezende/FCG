@@ -62,7 +62,7 @@ try
         options.EnableAnnotations();
         options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
         {
-            Description = "JWT Authorization header using the Bearer scheme. Example: \"Authorization: Bearer {token}\"",
+            Description = "JWT Authorization header using the Bearer scheme. Example: \"Authorization: {token}\"",
             Name = "Authorization",
             In = ParameterLocation.Header,
             Type = SecuritySchemeType.Http,
