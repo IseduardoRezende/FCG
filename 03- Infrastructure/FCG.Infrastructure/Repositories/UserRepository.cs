@@ -1,7 +1,10 @@
 using FCG.Domain.Entities;
+using FCG.Domain.Filters;
 using FCG.Domain.Repositories;
 using FCG.Infrastructure.DbContexts;
+using FCG.Infrastructure.Extensions;
 using Microsoft.EntityFrameworkCore;
+using System.Linq.Expressions;
 
 namespace FCG.Infrastructure.Repositories;
 
@@ -34,15 +37,17 @@ public class UserRepository : IUserRepository
             .AnyAsync(u => u.Email == email.ToLowerInvariant(), cancellationToken);
     }
 
-    public async Task<(IReadOnlyList<User> Items, int TotalCount)> GetPagedAsync(int page, int pageSize, CancellationToken cancellationToken = default)
+    public async Task<(IReadOnlyList<User> Items, int TotalCount)> GetPagedAsync(UserFilter filter, CancellationToken cancellationToken = default)
     {
-        var query = _dbContext.Set<User>().Include(u => u.UserRole).AsQueryable();
+        var query = _dbContext.Set<User>()
+            .Include(u => u.UserRole)
+            .Where(ApplyFilter(filter));
+
         var totalCount = await query.CountAsync(cancellationToken);
 
         var items = await query
-            .OrderBy(u => u.Id)
-            .Skip((page - 1) * pageSize)
-            .Take(pageSize)
+            .ApplyOrdering(filter)
+            .ApplyPagination(filter)
             .ToListAsync(cancellationToken);
 
         return (items, totalCount);
@@ -65,5 +70,16 @@ public class UserRepository : IUserRepository
     {
         await _dbContext.SaveChangesAsync(cancellationToken);
         _dbContext.ChangeTracker.Clear();
+    }
+
+    private static Expression<Func<User, bool>> ApplyFilter(UserFilter filter)
+    {
+        var value = filter.Value?.ToLower();
+
+        return u =>
+            (filter.UserRoleId == null || u.UserRoleId == filter.UserRoleId) &&
+            (string.IsNullOrWhiteSpace(value) ||
+             u.Name.ToLower().Contains(value) ||
+             u.Email.ToLower().Contains(value));
     }
 }

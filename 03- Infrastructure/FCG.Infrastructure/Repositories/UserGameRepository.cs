@@ -1,7 +1,10 @@
 using FCG.Domain.Entities;
+using FCG.Domain.Filters;
 using FCG.Domain.Repositories;
 using FCG.Infrastructure.DbContexts;
+using FCG.Infrastructure.Extensions;
 using Microsoft.EntityFrameworkCore;
+using System.Linq.Expressions;
 
 namespace FCG.Infrastructure.Repositories;
 
@@ -28,13 +31,20 @@ public class UserGameRepository : IUserGameRepository
             .AnyAsync(ug => ug.UserId == userId && ug.GameId == gameId, cancellationToken);
     }
 
-    public async Task<IReadOnlyList<UserGame>> GetByUserIdAsync(long userId, CancellationToken cancellationToken = default)
+    public async Task<(IReadOnlyList<UserGame> Items, int TotalCount)> GetPagedAsync(UserGameFilter filter, CancellationToken cancellationToken = default)
     {
-        return await _dbContext.Set<UserGame>()
+        var query = _dbContext.Set<UserGame>()
             .Include(ug => ug.Game)
-            .Where(ug => ug.UserId == userId)
-            .OrderByDescending(ug => ug.PurchasedAt)
+            .Where(ApplyFilter(filter));
+
+        var totalCount = await query.CountAsync(cancellationToken);
+
+        var items = await query
+            .ApplyOrdering(filter)
+            .ApplyPagination(filter)
             .ToListAsync(cancellationToken);
+
+        return (items, totalCount);
     }
 
     public async Task AddAsync(UserGame userGame, CancellationToken cancellationToken = default)
@@ -47,5 +57,17 @@ public class UserGameRepository : IUserGameRepository
     {
         await _dbContext.SaveChangesAsync(cancellationToken);
         _dbContext.ChangeTracker.Clear();
+    }
+
+    private static Expression<Func<UserGame, bool>> ApplyFilter(UserGameFilter filter)
+    {
+        var value = filter.Value?.ToLower();
+
+        return ug =>
+            (filter.UserId == null || ug.UserId == filter.UserId) &&
+            (filter.GameId == null || ug.GameId == filter.GameId) &&
+            (filter.PurchasedFrom == null || ug.PurchasedAt >= filter.PurchasedFrom) &&
+            (filter.PurchasedTo == null || ug.PurchasedAt <= filter.PurchasedTo) &&
+            (string.IsNullOrWhiteSpace(value) || ug.Game!.Name.ToLower().Contains(value));
     }
 }

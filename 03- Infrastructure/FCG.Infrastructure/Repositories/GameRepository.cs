@@ -1,7 +1,10 @@
 using FCG.Domain.Entities;
+using FCG.Domain.Filters;
 using FCG.Domain.Repositories;
 using FCG.Infrastructure.DbContexts;
+using FCG.Infrastructure.Extensions;
 using Microsoft.EntityFrameworkCore;
+using System.Linq.Expressions;
 
 namespace FCG.Infrastructure.Repositories;
 
@@ -19,9 +22,19 @@ public class GameRepository : IGameRepository
         return await _dbContext.Set<Game>().FirstOrDefaultAsync(g => g.Id == id, cancellationToken);
     }
 
-    public async Task<IReadOnlyList<Game>> GetAllAsync(CancellationToken cancellationToken = default)
+    public async Task<(IReadOnlyList<Game> Items, int TotalCount)> GetPagedAsync(GameFilter filter, CancellationToken cancellationToken = default)
     {
-        return await _dbContext.Set<Game>().OrderBy(g => g.Name).ToListAsync(cancellationToken);
+        var query = _dbContext.Set<Game>()
+            .Where(ApplyFilter(filter));
+
+        var totalCount = await query.CountAsync(cancellationToken);
+
+        var items = await query
+            .ApplyOrdering(filter)
+            .ApplyPagination(filter)
+            .ToListAsync(cancellationToken);
+
+        return (items, totalCount);
     }
 
     public async Task AddAsync(Game game, CancellationToken cancellationToken = default)
@@ -41,5 +54,17 @@ public class GameRepository : IGameRepository
     {
         await _dbContext.SaveChangesAsync(cancellationToken);
         _dbContext.ChangeTracker.Clear();
+    }
+
+    private static Expression<Func<Game, bool>> ApplyFilter(GameFilter filter)
+    {
+        var value = filter.Value?.ToLower();
+
+        return g =>
+            (string.IsNullOrWhiteSpace(value) ||
+             g.Name.ToLower().Contains(value) ||
+             g.Description.ToLower().Contains(value)) &&
+            (filter.MinPrice == null || g.Price >= filter.MinPrice) &&
+            (filter.MaxPrice == null || g.Price <= filter.MaxPrice);
     }
 }
