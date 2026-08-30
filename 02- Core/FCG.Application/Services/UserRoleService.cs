@@ -1,13 +1,9 @@
 using FCG.Application.DTOs.Users;
+using FCG.Application.Services.Interfaces;
 using FCG.Domain.Commons.Result;
 using FCG.Domain.Repositories;
 
-namespace FCG.Application.Services.Interfaces;
-
-public interface IUserRoleService
-{
-    Task<Result<IReadOnlyList<ReadUserRoleDto>>> GetAllAsync(CancellationToken cancellationToken = default);
-}
+namespace FCG.Application.Services;
 
 public class UserRoleService : IUserRoleService
 {

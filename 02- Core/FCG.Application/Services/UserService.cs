@@ -1,29 +1,16 @@
 using FCG.Application.DTOs.Users;
 using FCG.Application.Extensions;
+using FCG.Application.Services.Interfaces;
 using FCG.Domain.Commons;
 using FCG.Domain.Commons.Result;
 using FCG.Domain.Entities;
 using FCG.Domain.Enums;
+using FCG.Domain.Filters;
 using FCG.Domain.Repositories;
 using FCG.Domain.Security;
 using FluentValidation;
 
-namespace FCG.Application.Services.Interfaces;
-
-public interface IUserService
-{
-    Task<Result<ReadUserDto>> RegisterAsync(RegisterUserDto dto, CancellationToken cancellationToken = default);
-
-    Task<Result<TokenDto>> LoginAsync(LoginDto dto, CancellationToken cancellationToken = default);
-
-    Task<Result<Pagination<ReadUserDto>>> GetPagedAsync(int page, int pageSize, CancellationToken cancellationToken = default);
-
-    Task<Result<ReadUserDto>> GetByIdAsync(long id, CancellationToken cancellationToken = default);
-
-    Task<Result<ReadUserDto>> UpdateAsync(long id, UpdateUserDto dto, CancellationToken cancellationToken = default);
-
-    Task<Result<bool>> DeleteAsync(long id, CancellationToken cancellationToken = default);
-}
+namespace FCG.Application.Services;
 
 public class UserService : IUserService
 {
@@ -53,17 +40,14 @@ public class UserService : IUserService
     public async Task<Result<ReadUserDto>> RegisterAsync(RegisterUserDto dto, CancellationToken cancellationToken = default)
     {
         var validation = (await _registerValidator.ValidateAsync(dto, cancellationToken)).ToInvalidResult<ReadUserDto>();
-        if (validation is not null)
-        {
-            return validation;
-        }
+        
+        if (validation is not null)        
+            return validation;        
 
         var email = dto.Email.Trim().ToLowerInvariant();
 
-        if (await _userRepository.ExistsByEmailAsync(email, cancellationToken))
-        {
-            return ConflictResult<ReadUserDto>.Create(new Error("Email is already registered.", nameof(RegisterUserDto.Email)));
-        }
+        if (await _userRepository.ExistsByEmailAsync(email, cancellationToken))        
+            return ConflictResult<ReadUserDto>.Create(new Error("Email is already registered.", nameof(RegisterUserDto.Email)));        
 
         var salt = _passwordHasher.GenerateSalt();
 
@@ -87,38 +71,33 @@ public class UserService : IUserService
     public async Task<Result<TokenDto>> LoginAsync(LoginDto dto, CancellationToken cancellationToken = default)
     {
         var validation = (await _loginValidator.ValidateAsync(dto, cancellationToken)).ToInvalidResult<TokenDto>();
-        if (validation is not null)
-        {
-            return validation;
-        }
+       
+        if (validation is not null)        
+            return validation;        
 
         var user = await _userRepository.GetByEmailAsync(dto.Email.Trim(), cancellationToken);
-        if (user is null || !_passwordHasher.Verify(user.Password, dto.Password, user.Salt))
-        {
-            return NotFoundResult<TokenDto>.Create(new Error("Invalid email or password."));
-        }
+        
+        if (user is null || !_passwordHasher.Verify(user.Password, dto.Password, user.Salt))        
+            return NotFoundResult<TokenDto>.Create(new Error("Invalid email or password."));        
 
         return SuccessResult<TokenDto>.Create(_tokenService.Generate(MapToReadDto(user)));
     }
 
-    public async Task<Result<Pagination<ReadUserDto>>> GetPagedAsync(int page, int pageSize, CancellationToken cancellationToken = default)
+    public async Task<Result<Pagination<ReadUserDto>>> GetPagedAsync(UserFilter filter, CancellationToken cancellationToken = default)
     {
-        page = page < 1 ? 1 : page;
-        pageSize = pageSize < 1 ? 10 : pageSize;
-
-        var (items, totalCount) = await _userRepository.GetPagedAsync(page, pageSize, cancellationToken);
+        var (items, totalCount) = await _userRepository.GetPagedAsync(filter, cancellationToken);
         var mapped = items.Select(MapToReadDto).ToList();
 
-        return SuccessResult<Pagination<ReadUserDto>>.Create(new Pagination<ReadUserDto>(mapped, totalCount, page, pageSize));
+        return SuccessResult<Pagination<ReadUserDto>>.Create(
+            new Pagination<ReadUserDto>(mapped, totalCount, filter.CurrentPage, filter.PageSize));
     }
 
     public async Task<Result<ReadUserDto>> GetByIdAsync(long id, CancellationToken cancellationToken = default)
     {
         var user = await _userRepository.GetByIdAsync(id, cancellationToken);
-        if (user is null)
-        {
-            return NotFoundResult<ReadUserDto>.Create(new Error("User not found."));
-        }
+        
+        if (user is null)        
+            return NotFoundResult<ReadUserDto>.Create(new Error("User not found."));        
 
         return SuccessResult<ReadUserDto>.Create(MapToReadDto(user));
     }
@@ -126,23 +105,20 @@ public class UserService : IUserService
     public async Task<Result<ReadUserDto>> UpdateAsync(long id, UpdateUserDto dto, CancellationToken cancellationToken = default)
     {
         var validation = (await _updateValidator.ValidateAsync(dto, cancellationToken)).ToInvalidResult<ReadUserDto>();
-        if (validation is not null)
-        {
-            return validation;
-        }
+        
+        if (validation is not null)        
+            return validation;        
 
         var user = await _userRepository.GetByIdAsync(id, cancellationToken);
-        if (user is null)
-        {
-            return NotFoundResult<ReadUserDto>.Create(new Error("User not found."));
-        }
+        
+        if (user is null)        
+            return NotFoundResult<ReadUserDto>.Create(new Error("User not found."));        
 
         var email = dto.Email.Trim().ToLowerInvariant();
         var existing = await _userRepository.GetByEmailAsync(email, cancellationToken);
-        if (existing is not null && existing.Id != id)
-        {
-            return ConflictResult<ReadUserDto>.Create(new Error("Email is already registered.", nameof(UpdateUserDto.Email)));
-        }
+        
+        if (existing is not null && existing.Id != id)        
+            return ConflictResult<ReadUserDto>.Create(new Error("Email is already registered.", nameof(UpdateUserDto.Email)));        
 
         user.Name = dto.Name.Trim();
         user.Email = email;
@@ -158,10 +134,9 @@ public class UserService : IUserService
     public async Task<Result<bool>> DeleteAsync(long id, CancellationToken cancellationToken = default)
     {
         var user = await _userRepository.GetByIdAsync(id, cancellationToken);
-        if (user is null)
-        {
-            return NotFoundResult<bool>.Create(new Error("User not found."));
-        }
+        
+        if (user is null)        
+            return NotFoundResult<bool>.Create(new Error("User not found."));        
 
         user.Delete();
         await _userRepository.UpdateAsync(user, cancellationToken);

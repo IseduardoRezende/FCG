@@ -2,16 +2,12 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using FCG.Application.DTOs.Users;
+using FCG.Application.Services.Interfaces;
 using FCG.Domain.Settings;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 
 namespace FCG.Application.Services;
-
-public interface ITokenService
-{
-    TokenDto Generate(ReadUserDto user);
-}
 
 public class TokenService : ITokenService
 {
